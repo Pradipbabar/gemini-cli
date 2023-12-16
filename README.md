@@ -72,5 +72,4 @@ Generate explanations using a file as input:
 gimini-cli explain -f input.txt -s output.txt
 ```
 
----
 
