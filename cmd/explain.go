@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/Pradipbabar/gimini-cli/pkg"
 )
 
 // explainCmd represents the explain command
@@ -21,12 +22,21 @@ It allows you to explain various aspects of your application or system.`,
 
 		if filePath != "" && saveFilePath != "" {
 			fmt.Printf("Explain called with file path: %s and save file path: %s\n", filePath, saveFilePath)
-			// Add logic for when both -f and -s are present
+			data, err := pkg.ReadFromFileandSave(filePath,saveFilePath)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(data)
+		
 		} else if filePath != "" {
 			fmt.Printf("Explain called with file path: %s\n", filePath)
-			// Add logic for when only -f is present
+			data, err := pkg.ReadFromFile(filePath)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(data)
 		} else {
-			fmt.Println("Explain called")
+			fmt.Println("Provide flags")
 			// Add default logic here
 		}
 	},

@@ -12,7 +12,12 @@ func ReadFromFile(filePath string) (string, error) {
 		return "", fmt.Errorf("failed to read file: %v", err)
 	}
 
-	return string(content), nil
+	data, err := GenerateContent(string(content))
+			if err != nil {
+				return "", err
+			} else{
+				return data, nil
+			}
 }
 
 func ReadFromFileandSave(filePath, savepath string) (string, error) {
@@ -21,7 +26,11 @@ func ReadFromFileandSave(filePath, savepath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to read file: %v", err)
 	}
-	fmt.Println(savepath)
-
+	
+	err = GenerateContentAndSave(string(content),savepath)
+	if err != nil {
+		fmt.Println(err)
+		return "", fmt.Errorf("%v",err)
+	}
 	return string(content), nil
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/Pradipbabar/gimini-cli/pkg"
 )
 
 // chatCmd represents the chat command
@@ -24,9 +25,15 @@ It allows you to interact with the chat functionality of your application.`,
 			// Add logic for when both -p and -s are present
 		} else if prompt != "" {
 			fmt.Printf("Chat called with prompt: %s\n", prompt)
+			data, err := pkg.GenerateContent(prompt)
+			if err != nil {
+				fmt.Println("error occured",err)
+			} else{
+				fmt.Println(data)
+			}
 			// Add logic for when only -p is present
 		} else {
-			fmt.Println("Chat called")
+			fmt.Println("Provide flags")
 			// Add default logic here
 		}
 	},

@@ -42,10 +42,10 @@ type ResponseBody struct {
 	} `json:"promptFeedback"`
 }
 
-
 func GenerateContent(inputText string) (string, error) {
 	apikey := os .Getenv("GEMINI_API_KEY")
 	if apikey == "" {
+		fmt.Println(apikey)
 		return "", fmt.Errorf("Api Key not set")
 	}
 	// Prepare the request body
@@ -74,7 +74,7 @@ func GenerateContent(inputText string) (string, error) {
 	}
 
 	// Make the API request
-	resp, err := http.Post(fmt.Sprintf("%s?key=%s",gptAPIURL,apikey), "application/json", bytes.NewBuffer(requestBodyBytes))
+	resp, err := http.Post(fmt.Sprintf(gptAPIURL,apikey), "application/json", bytes.NewBuffer(requestBodyBytes))
 	if err != nil {
 		return "", fmt.Errorf("failed to make API request: %v", err)
 	}
@@ -88,7 +88,7 @@ func GenerateContent(inputText string) (string, error) {
 
 	// Parse the response JSON
 	var response ResponseBody
-	err = json.NewDecoder(respBody)(respBody, &response)
+	err = json.Unmarshal(respBody, &response)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal response body: %v", err)
 	}
