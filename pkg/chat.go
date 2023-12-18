@@ -24,23 +24,24 @@ type ResponseBody struct {
 		Content struct {
 			Parts []struct {
 				Text string `json:"text"`
-				Role string `json:"role"`
 			} `json:"parts"`
+			Role string `json:"role"`
 		} `json:"content"`
 		FinishReason string `json:"finishReason"`
 		Index        int    `json:"index"`
 		SafetyRatings []struct {
 			Category    string `json:"category"`
 			Probability string `json:"probability"`
-			} `json:"safetyRatings"`
-			} `json:"candidates"`
-			PromptFeedback struct {
-			SafetyRatings []struct {
+		} `json:"safetyRatings"`
+	} `json:"candidates"`
+	PromptFeedback struct {
+		SafetyRatings []struct {
 			Category    string `json:"category"`
 			Probability string `json:"probability"`
-			} `json:"safetyRatings"`
-	} `json:"candidates"`
+		} `json:"safetyRatings"`
+	} `json:"promptFeedback"`
 }
+
 
 func GenerateContent(inputText string) (string, error) {
 	apikey := os .Getenv("GEMINI_API_KEY")
