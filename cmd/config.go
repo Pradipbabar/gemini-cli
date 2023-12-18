@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/Pradipbabar/gimini-cli/pkg"
 )
 
 // configCmd represents the config command
@@ -17,7 +18,18 @@ var configCmd = &cobra.Command{
 It allows you to view, set, and modify various configuration options.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		key, _ := cmd.Flags().GetString("key")
-		fmt.Printf("config called with key: %s\n", key)
+
+		if key != "" {
+		
+		err := pkg.SetEnvironmentVariable(key)
+		if err != nil {
+			fmt.Printf("failed to set environment variable: %v", err)
+		}
+		fmt.Println("key configure successfully")
+	} else {
+		fmt.Println("Provide API key")
+	}
+
 	},
 }
 

@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const gptAPIURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=YOUR_SAPI_KEY"
+const gptAPIURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
 type RequestBody struct {
 	Contents []struct {
@@ -29,10 +29,24 @@ type ResponseBody struct {
 		} `json:"content"`
 		FinishReason string `json:"finishReason"`
 		Index        int    `json:"index"`
+		SafetyRatings []struct {
+			Category    string `json:"category"`
+			Probability string `json:"probability"`
+			} `json:"safetyRatings"`
+			} `json:"candidates"`
+			PromptFeedback struct {
+			SafetyRatings []struct {
+			Category    string `json:"category"`
+			Probability string `json:"probability"`
+			} `json:"safetyRatings"`
 	} `json:"candidates"`
 }
 
 func GenerateContent(inputText string) (string, error) {
+	apikey := os .Getenv("GEMINI_API_KEY")
+	if apikey == "" {
+		return "", fmt.Errorf("Api Key not set")
+	}
 	// Prepare the request body
 	requestBody := RequestBody{
 		Contents: []struct {
@@ -59,7 +73,7 @@ func GenerateContent(inputText string) (string, error) {
 	}
 
 	// Make the API request
-	resp, err := http.Post(gptAPIURL, "application/json", bytes.NewBuffer(requestBodyBytes))
+	resp, err := http.Post(fmt.Sprintf("%s?key=%s",gptAPIURL,apikey), "application/json", bytes.NewBuffer(requestBodyBytes))
 	if err != nil {
 		return "", fmt.Errorf("failed to make API request: %v", err)
 	}
@@ -73,7 +87,7 @@ func GenerateContent(inputText string) (string, error) {
 
 	// Parse the response JSON
 	var response ResponseBody
-	err = json.Unmarshal(respBody, &response)
+	err = json.NewDecoder(respBody)(respBody, &response)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal response body: %v", err)
 	}
