@@ -1,4 +1,3 @@
-
 # Gemini AI CLI
 
 Gemini AI CLI is a command-line interface (CLI) application written in Go, powered by the Cobra package. It allows you to interact with the Gemini AI API for various tasks such as configuring access keys, engaging in chat conversations, and generating explanations.
@@ -70,5 +69,3 @@ Generate explanations using a file as input:
 ```bash
 gimini-cli explain -f input.txt -s output.txt
 ```
-
-
