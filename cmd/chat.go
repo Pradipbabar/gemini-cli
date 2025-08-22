@@ -5,9 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/Pradipbabar/gimini-cli/pkg"
+	"github.com/spf13/cobra"
 )
 
 // chatCmd represents the chat command
@@ -24,14 +25,20 @@ It allows you to interact with the chat functionality of your application.`,
 			fmt.Printf("Chat called with prompt: %s and save file path: %s\n", prompt, saveFilePath)
 			// Add logic for when both -p and -s are present
 		} else if prompt != "" {
-			fmt.Printf("Chat called with prompt: %s\n", prompt)
+			outputFormat, _ := cmd.Flags().GetString("output")
+
 			data, err := pkg.GenerateContent(prompt)
 			if err != nil {
-				fmt.Println("error occured",err)
-			} else{
-				fmt.Println(data)
+				fmt.Printf("\033[31m[Error]\033[0m %v\n", err)
+				os.Exit(1)
 			}
-			// Add logic for when only -p is present
+
+			switch outputFormat {
+			case "json":
+				fmt.Printf("{\n  \"response\": %q\n}\n", data)
+			default:
+				fmt.Printf("\033[32m[Success]\033[0m %s\n", data)
+			}
 		} else {
 			fmt.Println("Provide flags")
 			// Add default logic here
@@ -45,6 +52,7 @@ func init() {
 	// Flags for the chat command
 	chatCmd.Flags().StringP("prompt", "p", "", "Specify the chat prompt string")
 	chatCmd.Flags().StringP("save", "s", "", "Specify the file path to save the chat")
+	chatCmd.Flags().StringP("output", "o", "plain", "Output format (plain|json)")
 
-	// Other flags and configuration settings can be added here.
+	chatCmd.MarkFlagRequired("prompt")
 }

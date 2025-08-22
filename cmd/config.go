@@ -6,8 +6,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/Pradipbabar/gimini-cli/pkg"
+	"github.com/spf13/cobra"
 )
 
 // configCmd represents the config command
@@ -20,15 +20,15 @@ It allows you to view, set, and modify various configuration options.`,
 		key, _ := cmd.Flags().GetString("key")
 
 		if key != "" {
-		
-		err := pkg.SetEnvironmentVariable(key)
-		if err != nil {
-			fmt.Printf("failed to set environment variable: %v", err)
+
+			err := pkg.SetEnvironmentVariable(key)
+			if err != nil {
+				fmt.Printf("failed to set environment variable: %v", err)
+			}
+			fmt.Println("key configure successfully")
+		} else {
+			fmt.Println("Provide API key")
 		}
-		fmt.Println("key configure successfully")
-	} else {
-		fmt.Println("Provide API key")
-	}
 
 	},
 }

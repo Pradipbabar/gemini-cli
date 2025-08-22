@@ -11,49 +11,12 @@ import (
 
 const gptAPIURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
-type RequestBody struct {
-	Contents []struct {
-		Parts []struct {
-			Text string `json:"text"`
-		} `json:"Parts"`
-	} `json:"contents"`
-}
-
-type ResponseBody struct {
-	Candidates []struct {
-		Content struct {
-			Parts []struct {
-				Text string `json:"text"`
-			} `json:"parts"`
-			Role string `json:"role"`
-		} `json:"content"`
-		FinishReason string `json:"finishReason"`
-		Index        int    `json:"index"`
-		SafetyRatings []struct {
-			Category    string `json:"category"`
-			Probability string `json:"probability"`
-		} `json:"safetyRatings"`
-	} `json:"candidates"`
-	PromptFeedback struct {
-		SafetyRatings []struct {
-			Category    string `json:"category"`
-			Probability string `json:"probability"`
-		} `json:"safetyRatings"`
-	} `json:"promptFeedback"`
-}
-
-func GenerateContent(inputText string) (string, error) {
-	apikey := os .Getenv("GEMINI_API_KEY")
-	if apikey == "" {
-		fmt.Println(apikey)
-		return "", fmt.Errorf("Api Key not set")
-	}
-	// Prepare the request body
-	requestBody := RequestBody{
+func createRequestBody(inputText string) RequestBody {
+	return RequestBody{
 		Contents: []struct {
 			Parts []struct {
 				Text string `json:"text"`
-			} `json:"Parts"`
+			} `json:"parts"`
 		}{
 			{
 				Parts: []struct {
@@ -66,31 +29,75 @@ func GenerateContent(inputText string) (string, error) {
 			},
 		},
 	}
+}
 
-	// Convert the request body to JSON
+type APIError struct {
+	Error struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	} `json:"error"`
+}
+
+func makeAPIRequest(requestBody RequestBody) (*ResponseBody, error) {
+	// Convert the request body to JSON and log it
 	requestBodyBytes, err := json.Marshal(requestBody)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request body: %v", err)
+		return nil, fmt.Errorf("failed to marshal request body: %v", err)
+	}
+	fmt.Printf("Request body: %s\n", string(requestBodyBytes))
+
+	// Create request
+	req, err := http.NewRequest("POST", gptAPIURL+"?key="+os.Getenv("GEMINI_API_KEY"), bytes.NewBuffer(requestBodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
 	// Make the API request
-	resp, err := http.Post(fmt.Sprintf(gptAPIURL,apikey), "application/json", bytes.NewBuffer(requestBodyBytes))
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to make API request: %v", err)
+		return nil, fmt.Errorf("failed to make API request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Read the response body
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	// Check if response contains an error
+	if resp.StatusCode != http.StatusOK {
+		var apiError APIError
+		if err := json.Unmarshal(respBody, &apiError); err == nil {
+			return nil, fmt.Errorf("API error: %s", apiError.Error.Message)
+		}
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	// Parse the response JSON
 	var response ResponseBody
 	err = json.Unmarshal(respBody, &response)
 	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal response body: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal response body: %v", err)
+	}
+
+	return &response, nil
+}
+
+func GenerateContent(inputText string) (string, error) {
+	apikey := os.Getenv("GEMINI_API_KEY")
+	if apikey == "" {
+		return "", fmt.Errorf("api key not set")
+	}
+
+	requestBody := createRequestBody(inputText)
+	response, err := makeAPIRequest(requestBody)
+	if err != nil {
+		return "", err
 	}
 
 	// Extract and return the generated text
@@ -102,49 +109,15 @@ func GenerateContent(inputText string) (string, error) {
 }
 
 func GenerateContentAndSave(inputText, filePath string) error {
-	// Prepare the request body
-	requestBody := RequestBody{
-		Contents: []struct {
-			Parts []struct {
-				Text string `json:"text"`
-			} `json:"Parts"`
-		}{
-			{
-				Parts: []struct {
-					Text string `json:"text"`
-				}{
-					{
-						Text: inputText,
-					},
-				},
-			},
-		},
+	apikey := os.Getenv("GEMINI_API_KEY")
+	if apikey == "" {
+		return fmt.Errorf("api key not set")
 	}
 
-	// Convert the request body to JSON
-	requestBodyBytes, err := json.Marshal(requestBody)
+	requestBody := createRequestBody(inputText)
+	response, err := makeAPIRequest(requestBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %v", err)
-	}
-
-	// Make the API request
-	resp, err := http.Post(gptAPIURL, "application/json", bytes.NewBuffer(requestBodyBytes))
-	if err != nil {
-		return fmt.Errorf("failed to make API request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %v", err)
-	}
-
-	// Parse the response JSON
-	var response ResponseBody
-	err = json.Unmarshal(respBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal response body: %v", err)
+		return err
 	}
 
 	// Extract and save the generated text to the file
